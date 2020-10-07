@@ -1,0 +1,26 @@
+version: '3.8'
+
+services:
+  jaeger:
+    image: chronowave/jaeger-all-in-one
+    ports:
+      - "5775:5775/udp"
+      - "6831:6831/udp"
+      - "6832:6832/udp"
+      - "5778:5778"
+      - "16686:16686"
+      - "14268:14268"
+      - "14250:14250"
+      - "9411:9411"
+      - "9668:9668"
+    volumes:
+      - ./:/data
+    restart: on-failure
+
+  grafana:
+    image: chronowave/grafana
+    ports:
+      - '3000:3000'
+    restart: on-failure
+    depends_on:
+      - jaeger
