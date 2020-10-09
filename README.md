@@ -1,22 +1,25 @@
 # OpenTracing with Jaeger/Grafana using ChronoWave as storage backend
+   * *Single node* mode [ChronoWave](https://github.com/chronowave/chronowave) as Jaeger storage backend.
+   * Ad hoc query through Grafana *Explore* UI.
 
-This is *single node* mode embedded [ChronoWave](https://github.com/chronowave/chronowave) as Jaeger storage backend. It also supports ad hoc query through Grafana *Explore* UI.
+## Getting started
 
-## Start Jaeger all-in-one and Grafana
-
-`git clone` this repo
-
-```shell script
-cd docker-componse
+```
+curl -O -L "https://raw.githubusercontent.com/chronowave/opentelemetry/main/docker-compose/docker-compose.yaml"
 docker-componse up
 ```
 Jaeger UI is at http://localhost:16686, Grafana UI is at http://localhost:3000
 
+   * Optional: start [Jaeger Hot R.O.D](https://github.com/jaegertracing/jaeger/tree/master/examples/hotrod)
+
 ## ChronoWave features
 1. supports keyword and wild card UTF-8 character search. For instance, if the input is `db.statement="User"` in *Tags* search field, the results will contain spans have at least one tag field where `key=db.statment` and `value` has word `User` (case sensitive) in it.
-2. requires less system resources to store/process/query span.
+2. requires less system resources to store/process/query span. Spans are stored on disk and loaded into memory on demand.
 3. supports ad hoc query through Grafana *Explore* with SSQL
 4. the limit of nested tags/logs field is 65536 per span
+
+## SSQL
+   * [Introduction](https://github.com/chronowave/chronowave/wiki/Semi-Structured-Query-Language)
 
 ## How it works
 
@@ -40,10 +43,10 @@ Jaeger UI is at http://localhost:16686, Grafana UI is at http://localhost:3000
 ### collecting spans
 1. Jaeger collector forwards spans to storage backend through gRPC plugin. ChronoWave marshals span into [ElasticSearch document model](https://github.com/jaegertracing/jaeger/blob/master/plugin/storage/es/spanstore/dbmodel/model.go), saves JSON files in `wal` directory.
    * Note: ChronoWave is a schema agnostic data store.
-2. construct self-compressed indices. Chronowave has two timer tasks
+2. construct self-compressed indices. ChronoWave has two timer tasks
    * Near time. Build index with all files in `wal` directory.
    * On Demand. Build long term index in `index` directory and remove indexed files from `wal` directory.
-3. create secondary auxiliary index:
+3. create secondary index:
 
    | JSON path   | Type |  SSQL syntax | Description |
    | ----------- | ---------- | ----------- | ----------- |
@@ -51,8 +54,6 @@ Jaeger UI is at http://localhost:16686, Grafana UI is at http://localhost:3000
    | /traceID    | key        | `[$tid /traceID key('2020')]` | string value, used as key lookup |
    | /spanID     | key        | `[$sid /spanID key('2020')]` | string value, used as key lookup |
    
-4. repeat 2 and 3
-
 ### Using Jaeger UI
 
 1. query has time range. 
@@ -64,9 +65,13 @@ Jaeger UI is at http://localhost:16686, Grafana UI is at http://localhost:3000
  
 ### Ad Hoc query using Grafana Explore
 
-The timestamp field should be `/startTime`. *Note: timestamp in Jaeger span recorded as microsecond, in ad hoc query, please enter time value accordingly.*
-The following screen shot is the result of query `find $tid, $log where [/logs/fields/value contain('nearby')] [$tid /traceID] [$log /logs]`. The query is to list spans' traceID and logs if one of the log field contains word "nearby".
-Please refer to the reference section for supported path in SSQL query.
+The timestamp field should be `/startTime`. *Note: timestamp in Jaeger span recorded as microsecond*
+The following screen shot is the result of query
+ ```
+find $tid, $log where [/logs/fields/value contain('nearby')] [$tid /traceID] [$log /logs]
+```
+The query is to list spans' traceID and logs if one of the log field contains word "nearby". ChronoWave Grafana backend datasource plugin adds time range in request before forwarding the query.
+Please refer to Jaeger ElasticSearch db model (below) for supported path in SSQL query.
 
 ![alt text](./images/explore.png "Grafana Explore")
 
