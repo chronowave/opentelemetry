@@ -16,8 +16,9 @@ var (
 
 func init() {
 	logger = hclog.New(&hclog.LoggerOptions{
-		Name:  "chronowave",
-		Level: hclog.Warn, // Jaeger only captures >= Warn, so don't bother logging below Warn
+		Name:       "chronowave",
+		Level:      hclog.Warn, // Jaeger only captures >= Warn, so don't bother logging below Warn
+		JSONFormat: true,
 	})
 }
 

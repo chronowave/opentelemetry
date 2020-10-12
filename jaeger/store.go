@@ -11,12 +11,11 @@ import (
 
 	"github.com/chronowave/chronowave/embed"
 	"github.com/hashicorp/go-hclog"
-	"github.com/labstack/echo/v4"
-
 	"github.com/jaegertracing/jaeger/model"
 	"github.com/jaegertracing/jaeger/plugin/storage/es/spanstore/dbmodel"
 	"github.com/jaegertracing/jaeger/storage/dependencystore"
 	"github.com/jaegertracing/jaeger/storage/spanstore"
+	"github.com/labstack/echo/v4"
 )
 
 const (
@@ -49,6 +48,7 @@ type WaveRider struct {
 	echo              *echo.Echo
 	from              dbmodel.FromDomain
 	to                dbmodel.ToDomain
+	ttlTicker         *time.Ticker
 	once              sync.Once
 	serviceOperations map[string]map[string]bool
 	rwLock            sync.RWMutex
@@ -56,17 +56,26 @@ type WaveRider struct {
 
 func newWaveRider(logger hclog.Logger, conf *conf) *WaveRider {
 	wave := embed.NewWave(conf.dir, timestamp, keys)
+	var tc *time.Ticker
+	if conf.ttl < time.Hour {
+		tc = time.NewTicker(conf.ttl)
+	} else {
+		tc = time.NewTicker(time.Hour)
+	}
+	go purge(tc, conf.ttl, wave)
 	return &WaveRider{
 		logger:            logger,
 		stream:            wave,
 		echo:              startEcho(wave, conf.port),
 		from:              dbmodel.FromDomain{},
 		to:                dbmodel.ToDomain{},
+		ttlTicker:         tc,
 		serviceOperations: map[string]map[string]bool{},
 	}
 }
 
 func (wr *WaveRider) Close() {
+	wr.ttlTicker.Stop()
 	wr.echo.Shutdown(context.Background())
 	wr.stream.Close()
 }
@@ -421,4 +430,13 @@ func buildTraceIdQuery(query *spanstore.TraceQueryParameters) (string, int64, in
 	sb.WriteString("order-by $st desc")
 
 	return sb.String(), min, max
+}
+
+func purge(ticker *time.Ticker, ttl time.Duration, wave *embed.WaveStream) {
+	logger.Warn("purge data ttl", "ttl", ttl)
+	for range ticker.C {
+		pt := time.Now().Add(-1 * ttl)
+		wave.Purge(context.Background(), pt)
+		logger.Warn("purge data before", "time", pt)
+	}
 }
