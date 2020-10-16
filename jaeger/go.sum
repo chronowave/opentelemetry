@@ -56,6 +56,8 @@ github.com/cespare/xxhash/v2 v2.1.1 h1:6MnRN8NT7+YBpUIWxHtefFZOKTAPgGjpQSxqLNn0+
 github.com/cespare/xxhash/v2 v2.1.1/go.mod h1:VGX0DQ3Q6kWi7AoAeZDth3/j3BFtOZR5XLFGgcrjCOs=
 github.com/chronowave/chronowave v0.1.1 h1:qN/yVLCID59bEb2GdYhd4RWKkORW0QFor8JjtykcSjY=
 github.com/chronowave/chronowave v0.1.1/go.mod h1:e4v/ma06ZWiaGj0XqS1yIli0Dqbea6m74KJhe2a56EQ=
+github.com/chronowave/chronowave v0.1.2 h1:Yiwa9vjfXBuqSGxbHKHDL2G4P13XYfU9+1tATzYl5BY=
+github.com/chronowave/chronowave v0.1.2/go.mod h1:e4v/ma06ZWiaGj0XqS1yIli0Dqbea6m74KJhe2a56EQ=
 github.com/chronowave/ext v1.0.0 h1:N4x3KjKTUTBJarmcfcnwCYAxeq7yghWtYkIJu2UIm6o=
 github.com/chronowave/ext v1.0.0/go.mod h1:Ptr1Tf1jTadgGMuL1sTcIuVlxlou6aERfdvvneG9kaM=
 github.com/circonus-labs/circonusllhist v0.1.4 h1:G5qJPuD16akpIXMUR7KcfBvrQOVm95+qyqUm+SEAZks=

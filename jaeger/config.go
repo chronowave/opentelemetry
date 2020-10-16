@@ -17,7 +17,7 @@ const (
 type conf struct {
 	dir  string
 	port int
-	ttl time.Duration
+	ttl  time.Duration
 }
 
 func readConfig(file string) *conf {
@@ -35,15 +35,15 @@ func readConfig(file string) *conf {
 		}
 	}
 
-	ttl, err := time.ParseDuration(dataTTL)
+	ttl, err := time.ParseDuration(v.GetString(dataTTL))
 	if err != nil {
-		logger.Error("failed to parse TTL duration, default to 3d", "ttl", dataTTL , "error", err)
+		logger.Error("failed to parse TTL duration, default to 3d", "ttl", v.GetString(dataTTL), "error", err)
 		ttl = time.Hour * 3 * 24
 	}
 
 	return &conf{
 		dir:  v.GetString(dataDir),
 		port: v.GetInt(httpPort),
-		ttl : ttl,
+		ttl:  ttl,
 	}
 }
